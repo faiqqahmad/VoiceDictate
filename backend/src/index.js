@@ -1,4 +1,5 @@
 import WebSocket from 'ws'
+import robot from "robotjs"
 
 const ws = new WebSocket("ws://localhost:3000", {
   perMessageDeflate: false
@@ -11,5 +12,7 @@ ws.on('open', function open() {
 });
 
 ws.on('message', function message(data) {
-  console.log('received: %s', data);
+  // console.log('received: %s', data);
+  robot.typeString(data.toString().slice(1,-1))
+  // console.log(data.toString().slice(1,-1), typeof(data));
 });
