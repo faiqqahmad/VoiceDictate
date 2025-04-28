@@ -176,3 +176,5 @@ cython_debug/
 .pypirc
 
 backend/node_modules
+
+vosk-model-en-us-0.22

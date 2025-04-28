@@ -34,7 +34,7 @@ def readMicStream(args):
             args.samplerate = int(device_info["default_samplerate"])
 
         if args.model is None:
-            model = Model("/Users/faiqahmad/Desktop/Coding/VoiceToText/model/vosk-model-small-en-us-0.15")
+            model = Model("/Users/faiqahmad/Desktop/Coding/VoiceToText/model/vosk-model-en-us-0.22")
         else:
             model = Model(lang=args.model)
 
@@ -93,6 +93,8 @@ def getArgs():
         "-m", "--model", type=str, help="language model; e.g. en-us, fr, nl; default is en-us")
     args = parser.parse_args(remaining)
     return args
+
+readMicStream(getArgs())
 
 
         
