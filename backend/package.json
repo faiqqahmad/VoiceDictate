@@ -20,7 +20,6 @@
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.2",
-    "@types/ws": "^8.18.1",
-    "electron": "^35.2.1"
+    "@types/ws": "^8.18.1"
   }
 }

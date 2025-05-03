@@ -12,7 +12,7 @@ q = queue.Queue()
 
 def runModel():
 
-    model = Model("/Users/faiqahmad/Desktop/Coding/VoiceToText/model/vosk-model-en-us-0.22")
+    model = Model("/Users/faiqahmad/Desktop/Coding/VoiceToText/model/vosk-model-small-en-us-0.15")
     recognizer = KaldiRecognizer(model, 16000)
 
     mic = pyaudio.PyAudio()

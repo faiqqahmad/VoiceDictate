@@ -13,6 +13,6 @@ ws.on('open', function open() {
 
 ws.on('message', function message(data) {
   // console.log('received: %s', data);
-  robot.typeString(data.toString().slice(1,-1))
-  // console.log(data.toString().slice(1,-1), typeof(data));
+  // robot.typeString(data.toString().slice(1,-1))
+  console.log("this is the data", data.toString().slice(1,-1), typeof(data));
 });
