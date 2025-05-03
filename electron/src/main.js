@@ -1,32 +1,23 @@
-process.env.PATH += ':/opt/homebrew/bin:/usr/local/bin';
-
-const fs = require('fs');
-let nodePath = '/usr/local/bin/node';
-
-if (!fs.existsSync(nodePath)) {
-  nodePath = '/opt/homebrew/bin/node';
-}
-
-if (!fs.existsSync(nodePath)) {
-  throw new Error('Node binary not found. Please install Node in a system-wide location.');
-}
-
-console.log('Checking nodePath:', nodePath);
-console.log('Exists?', fs.existsSync(nodePath));
-console.log('PATH in Electron:', process.env.PATH);
-
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
-import {spawn} from 'child_process'
-import which from 'which'
+import { spawn } from 'child_process';
+import which from 'which';
+import fs from 'fs';
+import test from 'node:test';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
 }
+
 let server;
-const scriptPath = path.join(__dirname, '../../backend/src', 'index.js')
+let model;
+const scriptPath = path.join(__dirname, '../../../backend/src', 'index.js');
+if (!fs.existsSync(scriptPath)) {
+  console.error(`Backend script not found at: ${scriptPath}`);
+}
+
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 800,
@@ -37,27 +28,53 @@ const createWindow = () => {
   });
 
   mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  
 };
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   createWindow();
-  console.log("before spawning server")
-  server = spawn(nodePath, [scriptPath], {
-    stdio: 'inherit',
-    cwd: path.dirname(scriptPath)
-  })
-  console.log(process.argv, 'this is process.argv')
-  console.log(scriptPath, 'this is the script path')
-  console.log('server has spawned')
-  // console.log("spawning server")
-  // On OS X it's common to re-create a window in the app when the
+  
+  try {
+    const sourcePath = path.join(__dirname, '../../../model/venv/bin/activate')
+    const source = spawn('source', sourcePath)
+    console.log(sourcePath, 'this is the source path')
+    const nodePath = await which('node');
+    console.log(`Node.js found at: ${nodePath}`);
+    
+    console.log("Starting backend server...");
+    console.log(`Script path: ${scriptPath}`);
+    model = spawn('python3')
+    
+    server = spawn(nodePath, [scriptPath], {
+      stdio: 'inherit',
+      cwd: path.dirname(scriptPath),
+      env: { ...process.env }  // Pass all environment variables
+    });
+
+    
+    server.on('error', (err) => {
+      console.error('Failed to start backend process:', err);
+      dialog.showErrorBox(
+        'Backend Error',
+        `Failed to start backend process: ${err.message}`
+      );
+    });
+    
+    server.on('exit', (code, signal) => {
+      console.log(`Backend process exited with code ${code} and signal ${signal}`);
+    });
+    
+    console.log('Backend server started successfully');
+  } catch (err) {
+    console.error('Error finding node executable:', err);
+    dialog.showErrorBox(
+      'Node.js Not Found',
+      'Could not find Node.js executable. Please make sure Node.js is installed and in your PATH.'
+    );
+  }
+
+  // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   app.on('activate', () => {
-    
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
@@ -68,14 +85,15 @@ app.whenReady().then(() => {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
-  if (server) {
-    server.kill()
-    console.log("killing child")
-  }
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
+// Clean up the server process when the app is quit
+app.on('before-quit', () => {
+  if (server) {
+    console.log("Terminating backend server...");
+    server.kill();
+  }
+});
