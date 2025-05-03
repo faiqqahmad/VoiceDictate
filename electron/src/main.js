@@ -17,6 +17,8 @@ const scriptPath = path.join(__dirname, '../../../backend/src', 'index.js');
 if (!fs.existsSync(scriptPath)) {
   console.error(`Backend script not found at: ${scriptPath}`);
 }
+const pythonPath = path.join(__dirname, "../../../model/venv/bin/python3")
+const modelPath = path.join(__dirname, '../../../model/app.py')
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
@@ -34,16 +36,17 @@ app.whenReady().then(async () => {
   createWindow();
   
   try {
-    const sourcePath = path.join(__dirname, '../../../model/venv/bin/activate')
-    const source = spawn('source', sourcePath)
-    console.log(sourcePath, 'this is the source path')
     const nodePath = await which('node');
-    console.log(`Node.js found at: ${nodePath}`);
+    // console.log(`Node.js found at: ${nodePath}`);
     
-    console.log("Starting backend server...");
-    console.log(`Script path: ${scriptPath}`);
-    model = spawn('python3')
-    
+    // console.log("Starting backend server...");
+    // console.log(`Script path: ${scriptPath}`);
+    model = spawn(pythonPath, [modelPath], {
+      stdio: true
+    })
+    model.on('spawn', (message)=> {
+      console.log('model has spawned,', message)
+    })
     server = spawn(nodePath, [scriptPath], {
       stdio: 'inherit',
       cwd: path.dirname(scriptPath),
@@ -95,5 +98,7 @@ app.on('before-quit', () => {
   if (server) {
     console.log("Terminating backend server...");
     server.kill();
+    model.kill();
+    console.log('both processes killed')
   }
 });
